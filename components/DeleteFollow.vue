@@ -39,7 +39,7 @@ export default Vue.extend({
   data() {
     return {
       // ボタンに表示される文字
-      button: '削除',
+      button: 'Remove',
       // ボタンの表示を切り替える変数
       displayButton: true,
       // ログイン中のユーザーがフォローしているかを表すフラグ
@@ -54,23 +54,29 @@ export default Vue.extend({
           this.displayButton = false
         }
         if (this.isFollowing === true) {
-          this.button = 'フォロー中'
+          this.button = 'Following'
         } else {
-          this.button = 'フォローする'
+          this.button = 'Follow'
         }
       }
     },
   },
   created() {
     // ログイン中ユーザーが対象ユーザーをフォローしているか判定
-    for (const myFollowList of this.myFollowLists) {
-      if (this.followUserId === myFollowList) {
-        this.isFollowing = true
-        break
-      } else {
-        this.isFollowing = false
+    if (this.myFollowLists.length === 0) {
+      this.isFollowing = false
+    } else {
+      for (const myFollowList of this.myFollowLists) {
+        if (this.followUserId === myFollowList) {
+          this.isFollowing = true
+          break
+        } else {
+          this.isFollowing = false
+        }
       }
     }
+
+    console.log(this.myFollowLists)
 
     // 他人のフォロー・フォロワー一覧画面の時の初期表示
     if (this.statusId === 3 || this.statusId === 4) {
@@ -78,9 +84,9 @@ export default Vue.extend({
         this.displayButton = false
       }
       if (this.isFollowing === true) {
-        this.button = 'フォロー中'
+        this.button = 'Following'
       } else {
-        this.button = 'フォローする'
+        this.button = 'Follow'
       }
     }
   },
@@ -91,45 +97,45 @@ export default Vue.extend({
     onClickButton() {
       // 自分のフォロー画面での処理
       if (this.statusId === 1) {
-        if (this.button === '削除') {
+        if (this.button === 'Remove') {
           this.$emit('deleteFollow')
           this.isFollowing = false
-          this.button = 'フォローする'
-        } else if (this.button === 'フォローする') {
+          this.button = 'Follow'
+        } else if (this.button === 'Follow') {
           this.$emit('follow')
           this.isFollowing = true
-          this.button = '削除'
+          this.button = 'Remove'
         }
       }
       // 自分のフォロワー画面での処理
       if (this.statusId === 2) {
-        if (this.button === '削除') {
+        if (this.button === 'Remove') {
           this.$emit('deleteFollower')
           if (this.isFollowing === true) {
-            this.button = 'フォロー中'
+            this.button = 'Following'
           } else {
-            this.button = 'フォローする'
+            this.button = 'Follow'
           }
-        } else if (this.button === 'フォロー中') {
+        } else if (this.button === 'Following') {
           this.$emit('deleteFollow')
           this.isFollowing = false
-          this.button = 'フォローする'
-        } else if (this.button === 'フォローする') {
+          this.button = 'Follow'
+        } else if (this.button === 'Follow') {
           this.$emit('follow')
           this.isFollowing = true
-          this.button = 'フォロー中'
+          this.button = 'Following'
         }
       }
       // 他人のフォロー・フォロワー画面での処理
       if (this.statusId === 3 || this.statusId === 4) {
-        if (this.button === 'フォロー中') {
+        if (this.button === 'Following') {
           this.$emit('deleteFollow')
           this.isFollowing = false
-          this.button = 'フォローする'
-        } else if (this.button === 'フォローする') {
+          this.button = 'Follow'
+        } else if (this.button === 'Follow') {
           this.$emit('follow')
           this.isFollowing = true
-          this.button = 'フォロー中'
+          this.button = 'Following'
         }
       }
     },

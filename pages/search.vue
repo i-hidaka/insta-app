@@ -104,6 +104,7 @@ export default Vue.extend({
   components: {
     AccountList,
   },
+
   middleware: 'auth',
   data() {
     return {
@@ -139,36 +140,53 @@ export default Vue.extend({
       allPostsUrl: 'https://api-instagram-app.herokuapp.com/allposts',
       // 仮のユーザーID
       userId: 3,
+      // 遷移元のパス名
+      referrerPath: '',
     }
   },
-  computed: {},
+  head(): any {
+    return {
+      title: `${this.$route.name} - Zipangram`,
+    }
+  },
   created() {
-    /**
-     * 全投稿情報を取得
-     */
-    this.$axios.$get(this.allPostsUrl).then((res) => {
-      this.displayCaptionList = res
-      this.displayPrefectureList = res
-      // 初期表示の写真をランダムに並べ替え
-      this.shuffleArray(this.displayCaptionList)
-      this.shuffleArray(this.displayPrefectureList)
-    })
+    // 投稿詳細画面から画面遷移したかを取得
+    this.referrerPath = this.$store.getters['searchPrefecture/getReferrerPath']
 
     // 投稿詳細画面から都道府県名クリックの結果表示
-
-    // 投稿詳細から取得した都道府県
-    const PREFECTURE_NAME: any =
-      this.$store.getters['searchPrefecture/getPrefectureName']
-    // searchPrefectureのstateが空欄じゃない時の処理
-    if (PREFECTURE_NAME !== '') {
-      this.display = 'prefecture'
-      this.searchWord = PREFECTURE_NAME
-      this.onSearch()
+    if (this.referrerPath === 'home' || this.referrerPath === 'postDetail-id') {
+      // 投稿詳細から取得した都道府県
+      const PREFECTURE_NAME: any =
+        this.$store.getters['searchPrefecture/getPrefectureName']
+      // searchPrefectureのstateが空欄じゃない時の処理
+      if (PREFECTURE_NAME !== '') {
+        this.display = 'prefecture'
+        this.searchWord = PREFECTURE_NAME
+        this.onSearch()
+      }
       // searchPrefectureのstateを初期化
-      this.$store.commit('searchPrefecture/catchPrefecture', '')
+      this.$store.commit('searchPrefecture/catchPath', '')
     }
   },
-  mounted() {},
+  mounted() {
+    if (this.referrerPath === '') {
+      this.$nextTick(() => {
+        // ローディング開始
+        this.$nuxt.$loading.start()
+        // 全投稿情報を取得
+        this.$axios.$get(this.allPostsUrl).then((res: any) => {
+          this.displayCaptionList = res
+          this.displayPrefectureList = res
+          // 初期表示の写真をランダムに並べ替え
+          this.shuffleArray(this.displayCaptionList)
+          this.shuffleArray(this.displayPrefectureList)
+        })
+        // ローディング終了
+        setTimeout(() => this.$nuxt.$loading.finish(), 500)
+      })
+    }
+  },
+
   updated() {
     this.displayAccountList.length = 0
   },
@@ -183,7 +201,8 @@ export default Vue.extend({
      * 検索機能
      */
     async onSearch() {
-      // this.displayAccountList.length = 0
+      // ローディング開始
+      this.$nuxt.$loading.start()
       if (this.display === 'keyword') {
         this.accErrorMessage = false
         this.preErrorMessage = false
@@ -193,7 +212,7 @@ export default Vue.extend({
          */
         await this.$axios
           .$post(this.searchCaptionUrl, { caption: this.searchWord })
-          .then((res) => {
+          .then((res: any) => {
             if (res.status === 'error') {
               this.displayCaptionList.length = 0
               this.keyErrorMessage = true
@@ -208,12 +227,13 @@ export default Vue.extend({
       } else if (this.display === 'account') {
         this.keyErrorMessage = false
         this.accErrorMessage = false
+
         /**
          * アカウント検索機能
          */
         await this.$axios
           .$post(this.searchAccountUrl, { userName: this.searchWord })
-          .then((res) => {
+          .then((res: any) => {
             // 検索結果がなかった時
             if (res.status === 'error') {
               this.displayAccountList.length = 0
@@ -237,7 +257,7 @@ export default Vue.extend({
          */
         await this.$axios
           .$post(this.searchPrefectureUrl, { prefecture: this.searchWord })
-          .then((res) => {
+          .then((res: any) => {
             if (res.status === 'error') {
               this.displayPrefectureList.length = 0
               this.preErrorMessage = true
@@ -250,6 +270,8 @@ export default Vue.extend({
             }
           })
       }
+      // ローディング終了
+      this.$nuxt.$loading.finish()
     },
   },
 })
